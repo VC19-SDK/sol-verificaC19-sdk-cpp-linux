@@ -73,7 +73,7 @@ jobs:
       run: cd && git clone https://github.com/jimsch/cn-cbor.git && cd cn-cbor && mkdir build && cd build && cmake .. -DBUILD_SHARED_LIBS=ON && cmake --build . -- all && sudo cp dist/lib/libcn-cbor.so /usr/lib/libcn-cbor.so && sudo ldconfig && echo "$PATH"
         
     - name: Compile project
-      run: pwd && git clone https://github.com/jimsch/cn-cbor.git && sudo cp -r cn-cbor/include/cn-cbor/cn-cbor.h include/cn-cbor/cn-cbor.h && cmake . && make && sudo make install
+      run: pwd && git clone https://github.com/jimsch/cn-cbor.git && sudo mkdir -p include/cn-cbor && sudo cp cn-cbor/include/cn-cbor/cn-cbor.h include/cn-cbor/cn-cbor.h && cmake . && make && sudo make install
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
