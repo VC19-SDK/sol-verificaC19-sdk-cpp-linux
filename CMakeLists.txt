@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.0)
-project(verificaC19-sdk VERSION 1.1.0)
+cmake_minimum_required(VERSION 2.8)
+set(CMAKE_PROJECT_VERSION 1.1.2)
 
 option(COMPILE_EXAMPLES "Compile example library and applications" OFF)
 

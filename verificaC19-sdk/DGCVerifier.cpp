@@ -636,7 +636,7 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 						if (EVP_DigestVerifyInit(ctx, &pkey_ctx, EVP_sha256(), NULL, pkey) > 0 ) {
 							if (EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING) > 0) {
 								if (EVP_DigestVerifyUpdate(ctx, dataToBeVerified, dataToBeVerifiedLen) > 0) {
-									int verify = EVP_DigestVerifyFinal(ctx, cborsign->v.bytes, cborsign->length);
+									int verify = EVP_DigestVerifyFinal(ctx, (unsigned char*)cborsign->v.bytes, cborsign->length);
 									m_logger->info("EVP verify result: %d", verify);
 									X509_free(cert);
 									EVP_MD_CTX_destroy(ctx);
