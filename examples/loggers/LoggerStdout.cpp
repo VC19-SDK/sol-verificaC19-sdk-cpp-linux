@@ -1,6 +1,8 @@
 // Copyright (c) 2021 Solari di Udine S.p.A
 // Licensed under the Apache License, Version 2.0
 
+#include <cstdio>
+
 #include <sys/time.h>
 
 #include <stdarg.h>

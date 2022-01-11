@@ -636,7 +636,7 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 						if (EVP_DigestVerifyInit(ctx, &pkey_ctx, EVP_sha256(), NULL, pkey) > 0 ) {
 							if (EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING) > 0) {
 								if (EVP_DigestVerifyUpdate(ctx, dataToBeVerified, dataToBeVerifiedLen) > 0) {
-									int verify = EVP_DigestVerifyFinal(ctx, cborsign->v.bytes, cborsign->length);
+									int verify = EVP_DigestVerifyFinal(ctx, (unsigned char*)cborsign->v.bytes, cborsign->length);
 									m_logger->info("EVP verify result: %d", verify);
 									X509_free(cert);
 									EVP_MD_CTX_destroy(ctx);
@@ -729,8 +729,9 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 								certificate.vaccination.doseNumber > certificate.vaccination.totalSeriesOfDoses) {
 							startDay = 0;
 						}
-						// SDK version 1.1.1 start validity immediate for complete vaccination with at least 2 doses
-						if (certificate.vaccination.doseNumber == certificate.vaccination.totalSeriesOfDoses &&
+						// SDK version 1.1.1 start validity immediate for Janssen complete vaccination with at least 2 doses
+						if (certificate.vaccination.medicinalProduct == RULE_TYPE_EU_1_20_1525 &&
+								certificate.vaccination.doseNumber == certificate.vaccination.totalSeriesOfDoses &&
 								certificate.vaccination.totalSeriesOfDoses >= 2) {
 							startDay = 0;
 						}
