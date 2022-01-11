@@ -729,8 +729,9 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 								certificate.vaccination.doseNumber > certificate.vaccination.totalSeriesOfDoses) {
 							startDay = 0;
 						}
-						// SDK version 1.1.1 start validity immediate for complete vaccination with at least 2 doses
-						if (certificate.vaccination.doseNumber == certificate.vaccination.totalSeriesOfDoses &&
+						// SDK version 1.1.1 start validity immediate for Janssen complete vaccination with at least 2 doses
+						if (certificate.vaccination.medicinalProduct == RULE_TYPE_EU_1_20_1525 &&
+								certificate.vaccination.doseNumber == certificate.vaccination.totalSeriesOfDoses &&
 								certificate.vaccination.totalSeriesOfDoses >= 2) {
 							startDay = 0;
 						}
