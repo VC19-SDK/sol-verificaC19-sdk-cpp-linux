@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.0)
-project(verificaC19-sdk VERSION 1.1.0)
+cmake_minimum_required(VERSION 2.8)
+set(CMAKE_PROJECT_VERSION 1.1.2)
+
+option(COMPILE_EXAMPLES "Compile example library and applications" OFF)
 
 # Directory defines
 set (DIR_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include/")
@@ -11,9 +13,9 @@ set (DIR_EXAMPLES_KEYS_PROVIDER "${CMAKE_CURRENT_SOURCE_DIR}/examples/keys-provi
 set (DIR_EXAMPLES_KEYS_STORAGE "${CMAKE_CURRENT_SOURCE_DIR}/examples/keys-storage")
 set (DIR_EXAMPLES_RULES_PROVIDER "${CMAKE_CURRENT_SOURCE_DIR}/examples/rules-provider")
 set (DIR_EXAMPLES_RULES_STORAGE "${CMAKE_CURRENT_SOURCE_DIR}/examples/rules-storage")
+set (DIR_EXAMPLES_CRL_PROVIDER "${CMAKE_CURRENT_SOURCE_DIR}/examples/crl-provider")
+set (DIR_EXAMPLES_CRL_STORAGE "${CMAKE_CURRENT_SOURCE_DIR}/examples/crl-storage")
 set (DIR_EXAMPLES_LOGGERS "${CMAKE_CURRENT_SOURCE_DIR}/examples/loggers")
-
-message(${DIR_EXAMPLES})
 
 set (CXX_FLAGS_COMMON "$ENV{CXXFLAGS} -fPIC -O0")
 set (CMAKE_CXX_FLAGS_RELEASE "${CXX_FLAGS_COMMON} -s")
@@ -28,12 +30,15 @@ set (CMAKE_BUILD_TYPE DEBUG)
 include_directories(
 	"${CMAKE_CURRENT_SOURCE_DIR}/${ROOT_SOURCE_DIR}"
 	"${DIR_INCLUDE}"
+	"${DIR_INCLUDE}/verificaC19-sdk/examples"
 	"${DIR_EXAMPLES}"
 	"${DIR_EXAMPLES_C}"
 	"${DIR_EXAMPLES_KEYS_PROVIDER}"
 	"${DIR_EXAMPLES_KEYS_STORAGE}"
 	"${DIR_EXAMPLES_RULES_PROVIDER}"
 	"${DIR_EXAMPLES_RULES_STORAGE}"
+	"${DIR_EXAMPLES_CRL_PROVIDER}"
+	"${DIR_EXAMPLES_CRL_STORAGE}"
 	"${DIR_EXAMPLES_LOGGERS}"
 )
 
@@ -46,29 +51,41 @@ aux_source_directory(${DIR_EXAMPLES_C} SRC_EXAMPLES_C)
 aux_source_directory(${DIR_EXAMPLES_CLIENT} SRC_EXAMPLES_CLIENT)
 aux_source_directory(${DIR_EXAMPLES_KEYS_PROVIDER} SRC_EXAMPLES_KEYS_PROVIDER)
 aux_source_directory(${DIR_EXAMPLES_KEYS_STORAGE} SRC_EXAMPLES_KEYS_STORAGE)
-aux_source_directory(${DIR_EXAMPLES_RULES_PROVIDER} SRC_EXAMPLE_RULES_PROVIDER)
-aux_source_directory(${DIR_EXAMPLES_RULES_STORAGE} SRC_EXAMPLE_RULES_STORAGE)
+aux_source_directory(${DIR_EXAMPLES_RULES_PROVIDER} SRC_EXAMPLES_RULES_PROVIDER)
+aux_source_directory(${DIR_EXAMPLES_RULES_STORAGE} SRC_EXAMPLES_RULES_STORAGE)
+aux_source_directory(${DIR_EXAMPLES_CRL_PROVIDER} SRC_EXAMPLES_CRL_PROVIDER)
+aux_source_directory(${DIR_EXAMPLES_CRL_STORAGE} SRC_EXAMPLES_CRL_STORAGE)
 aux_source_directory(${DIR_EXAMPLES_LOGGERS} SRC_EXAMPLES_LOGGERS)
 
 add_library(verificaC19-sdk SHARED ${SRC_VERIFICAC19_SDK})
 set_target_properties(verificaC19-sdk PROPERTIES OUTPUT_NAME verificaC19-sdk)
-set_target_properties(verificaC19-sdk PROPERTIES VERSION 1.1.0)
+set_target_properties(verificaC19-sdk PROPERTIES VERSION ${CMAKE_PROJECT_VERSION})
 target_link_libraries(verificaC19-sdk -lcrypto -lz -lcn-cbor)
 install(TARGETS verificaC19-sdk LIBRARY DESTINATION lib PUBLIC_HEADER DESTINATION include)
 INSTALL(DIRECTORY ${DIR_INCLUDE}/verificaC19-sdk DESTINATION include)
 
-add_executable(verificaC19-example ${SRC_CPP_EXAMPLE} ${SRC_EXAMPLES_KEYS_PROVIDER} ${SRC_EXAMPLES_KEYS_STORAGE} ${SRC_EXAMPLE_RULES_PROVIDER} ${SRC_EXAMPLE_RULES_STORAGE} ${SRC_EXAMPLES_LOGGERS})
-target_link_libraries (verificaC19-example verificaC19-sdk -lcrypto -lz -lcn-cbor -lcurl -ljsoncpp -lpthread -ldl)
+if(COMPILE_EXAMPLES)
+
+add_library(verificaC19-common-examples SHARED ${SRC_EXAMPLES_KEYS_PROVIDER} ${SRC_EXAMPLES_KEYS_STORAGE} ${SRC_EXAMPLES_RULES_PROVIDER} ${SRC_EXAMPLES_RULES_STORAGE} ${SRC_EXAMPLES_CRL_PROVIDER} ${SRC_EXAMPLES_CRL_STORAGE} ${SRC_EXAMPLES_LOGGERS})
+set_target_properties(verificaC19-sdk PROPERTIES OUTPUT_NAME verificaC19-sdk)
+set_target_properties(verificaC19-sdk PROPERTIES VERSION ${CMAKE_PROJECT_VERSION})
+target_link_libraries(verificaC19-sdk -lcurl -ljsoncpp -lpthread)
+install(TARGETS verificaC19-common-examples LIBRARY DESTINATION lib PUBLIC_HEADER DESTINATION include)
+
+add_executable(verificaC19-example ${SRC_CPP_EXAMPLE})
+target_link_libraries (verificaC19-example verificaC19-sdk verificaC19-common-examples -ldl)
 install(TARGETS verificaC19-example ARCHIVE DESTINATION bin RUNTIME DESTINATION bin)
 
-add_executable(verificaC19-c-example ${SRC_C_EXAMPLE} ${SRC_EXAMPLES_KEYS_PROVIDER} ${SRC_EXAMPLES_KEYS_STORAGE} ${SRC_EXAMPLE_RULES_PROVIDER} ${SRC_EXAMPLE_RULES_STORAGE} ${SRC_EXAMPLES_LOGGERS})
-target_link_libraries (verificaC19-c-example verificaC19-sdk -lcrypto -lz -lcn-cbor -lcurl -ljsoncpp -lpthread -ldl)
+add_executable(verificaC19-c-example ${SRC_C_EXAMPLE})
+target_link_libraries (verificaC19-c-example verificaC19-sdk verificaC19-common-examples -ldl)
 install(TARGETS verificaC19-c-example ARCHIVE DESTINATION bin RUNTIME DESTINATION bin)
 
-add_executable(verificaC19-client ${SRC_CPP_CLIENT_EXAMPLE} ${SRC_EXAMPLES_KEYS_PROVIDER} ${SRC_EXAMPLES_KEYS_STORAGE} ${SRC_EXAMPLE_RULES_PROVIDER} ${SRC_EXAMPLE_RULES_STORAGE} ${SRC_EXAMPLES_LOGGERS})
-target_link_libraries (verificaC19-client verificaC19-sdk -lcrypto -lz -lcn-cbor -lcurl -ljsoncpp -lpthread -ldl)
+add_executable(verificaC19-client ${SRC_CPP_CLIENT_EXAMPLE})
+target_link_libraries (verificaC19-client verificaC19-sdk verificaC19-common-examples)
 install(TARGETS verificaC19-client ARCHIVE DESTINATION bin RUNTIME DESTINATION bin)
 
-add_executable(verificaC19-c-client ${SRC_C_CLIENT_EXAMPLE} ${SRC_EXAMPLES_KEYS_PROVIDER} ${SRC_EXAMPLES_KEYS_STORAGE} ${SRC_EXAMPLE_RULES_PROVIDER} ${SRC_EXAMPLE_RULES_STORAGE} ${SRC_EXAMPLES_LOGGERS})
-target_link_libraries (verificaC19-c-client verificaC19-sdk -lcrypto -lz -lcn-cbor -lcurl -ljsoncpp -lpthread -ldl)
+add_executable(verificaC19-c-client ${SRC_C_CLIENT_EXAMPLE})
+target_link_libraries (verificaC19-c-client verificaC19-sdk verificaC19-common-examples)
 install(TARGETS verificaC19-c-client ARCHIVE DESTINATION bin RUNTIME DESTINATION bin)
+
+endif()
