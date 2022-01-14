@@ -892,7 +892,8 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 				}
 
 				if (certificate.isTest()) {
-					if (scanMode == SCAN_MODE_2G) {
+
+					if (scanMode != SCAN_MODE_3G) {
 						certificateSimple.certificateStatus = NOT_VALID;
 						m_logger->debug("Digital certificate of %s not valid for selected scan mode",
 								certificate.test.dateTimeOfCollection.c_str());
