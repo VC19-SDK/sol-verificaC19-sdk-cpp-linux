@@ -88,8 +88,12 @@ Build</h3>
 <div class="fragment"><div class="line">cmake .</div>
 <div class="line">make</div>
 <div class="line">make install # as root or sudoer</div>
-</div><!-- fragment --><p>If you want to compile also with examples and create also examples library you can use this command, will compile and install libverificaC19-sdk.so and libverificaC19-common-examples.so:</p>
-<div class="fragment"><div class="line">cmake . -DCOMPILE_EXAMPLES=ON</div>
+</div><!-- fragment --><p>If you want to build also with examples and create also examples library you can use this command, will compile and install libverificaC19-sdk.so and libverificaC19-common-examples.so:</p>
+<div class="fragment"><div class="line">cmake . -DBUILD_EXAMPLES=ON</div>
+<div class="line">make</div>
+<div class="line">make install # as root or sudoer</div>
+</div><!-- fragment --><p>If you want to build static libraries (with or without examples) you can use this command, will compile and install libverificaC19-sdk.a and (if enabled) libverificaC19-common-examples.a:</p>
+<div class="fragment"><div class="line">cmake . -DBUILD_STATIC=ON</div>
 <div class="line">make</div>
 <div class="line">make install # as root or sudoer</div>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md5"></a>

@@ -101,6 +101,8 @@ void CRLProviderItaly::refreshCRL(ICRLStorage* crlStorage) const {
 
 	// check if need to update
 	if (jCRLStatus["version"].asInt() == jDownloadInfo["version"].asInt()) {
+		// permit to update time of last update
+		crlStorage->commitUpdatedCRL();
 		m_logger->info("No need to update CRL, same version: %d", jCRLStatus["version"].asInt());
 		return;
 	}

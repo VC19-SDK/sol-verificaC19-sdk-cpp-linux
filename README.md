@@ -28,11 +28,21 @@ make
 make install # as root or sudoer
 ```
 
-If you want to compile also with examples and create also examples library you can use this command,
+If you want to build also with examples and create also examples library you can use this command,
 will compile and install libverificaC19-sdk.so and libverificaC19-common-examples.so:
 
 ```sh
-cmake . -DCOMPILE_EXAMPLES=ON
+cmake . -DBUILD_EXAMPLES=ON
+make
+make install # as root or sudoer
+```
+
+
+If you want to build static libraries (with or without examples) you can use this command,
+will compile and install libverificaC19-sdk.a and (if enabled) libverificaC19-common-examples.a:
+
+```sh
+cmake . -DBUILD_STATIC=ON
 make
 make install # as root or sudoer
 ```

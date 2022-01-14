@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_PROJECT_VERSION 1.1.2)
 
-option(COMPILE_EXAMPLES "Compile example library and applications" OFF)
+option(BUILD_EXAMPLES "Build example library and applications" OFF)
+option(BUILD_STATIC "Build static library" OFF)
 
 # Directory defines
 set (DIR_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include/")
@@ -57,6 +58,13 @@ aux_source_directory(${DIR_EXAMPLES_CRL_PROVIDER} SRC_EXAMPLES_CRL_PROVIDER)
 aux_source_directory(${DIR_EXAMPLES_CRL_STORAGE} SRC_EXAMPLES_CRL_STORAGE)
 aux_source_directory(${DIR_EXAMPLES_LOGGERS} SRC_EXAMPLES_LOGGERS)
 
+if(BUILD_STATIC)
+
+add_library(verificaC19-sdk STATIC ${SRC_VERIFICAC19_SDK})
+set_target_properties(verificaC19-sdk PROPERTIES OUTPUT_NAME verificaC19-sdk)
+
+else(BUILD_STATIC)
+
 add_library(verificaC19-sdk SHARED ${SRC_VERIFICAC19_SDK})
 set_target_properties(verificaC19-sdk PROPERTIES OUTPUT_NAME verificaC19-sdk)
 set_target_properties(verificaC19-sdk PROPERTIES VERSION ${CMAKE_PROJECT_VERSION})
@@ -64,28 +72,39 @@ target_link_libraries(verificaC19-sdk -lcrypto -lz -lcn-cbor)
 install(TARGETS verificaC19-sdk LIBRARY DESTINATION lib PUBLIC_HEADER DESTINATION include)
 INSTALL(DIRECTORY ${DIR_INCLUDE}/verificaC19-sdk DESTINATION include)
 
-if(COMPILE_EXAMPLES)
+endif(BUILD_STATIC)
+
+if(BUILD_EXAMPLES)
+
+if(BUILD_STATIC)
+
+add_library(verificaC19-common-examples STATIC ${SRC_EXAMPLES_KEYS_PROVIDER} ${SRC_EXAMPLES_KEYS_STORAGE} ${SRC_EXAMPLES_RULES_PROVIDER} ${SRC_EXAMPLES_RULES_STORAGE} ${SRC_EXAMPLES_CRL_PROVIDER} ${SRC_EXAMPLES_CRL_STORAGE} ${SRC_EXAMPLES_LOGGERS})
+set_target_properties(verificaC19-common-examples PROPERTIES OUTPUT_NAME verificaC19-common-examples)
+
+else(BUILD_STATIC)
 
 add_library(verificaC19-common-examples SHARED ${SRC_EXAMPLES_KEYS_PROVIDER} ${SRC_EXAMPLES_KEYS_STORAGE} ${SRC_EXAMPLES_RULES_PROVIDER} ${SRC_EXAMPLES_RULES_STORAGE} ${SRC_EXAMPLES_CRL_PROVIDER} ${SRC_EXAMPLES_CRL_STORAGE} ${SRC_EXAMPLES_LOGGERS})
-set_target_properties(verificaC19-sdk PROPERTIES OUTPUT_NAME verificaC19-sdk)
-set_target_properties(verificaC19-sdk PROPERTIES VERSION ${CMAKE_PROJECT_VERSION})
-target_link_libraries(verificaC19-sdk -lcurl -ljsoncpp -lpthread)
+set_target_properties(verificaC19-common-examples PROPERTIES OUTPUT_NAME verificaC19-common-examples)
+set_target_properties(verificaC19-common-examples PROPERTIES VERSION ${CMAKE_PROJECT_VERSION})
+target_link_libraries(verificaC19-common-examples -lcurl -ljsoncpp -lpthread)
 install(TARGETS verificaC19-common-examples LIBRARY DESTINATION lib PUBLIC_HEADER DESTINATION include)
 
+endif(BUILD_STATIC)
+
 add_executable(verificaC19-example ${SRC_CPP_EXAMPLE})
-target_link_libraries (verificaC19-example verificaC19-sdk verificaC19-common-examples -ldl)
+target_link_libraries (verificaC19-example verificaC19-sdk verificaC19-common-examples -lcurl -ljsoncpp -lcrypto -lz -lcn-cbor -lpthread -ldl)
 install(TARGETS verificaC19-example ARCHIVE DESTINATION bin RUNTIME DESTINATION bin)
 
 add_executable(verificaC19-c-example ${SRC_C_EXAMPLE})
-target_link_libraries (verificaC19-c-example verificaC19-sdk verificaC19-common-examples -ldl)
+target_link_libraries (verificaC19-c-example verificaC19-sdk verificaC19-common-examples -lcurl -ljsoncpp -lcrypto -lz -lcn-cbor -lpthread -ldl)
 install(TARGETS verificaC19-c-example ARCHIVE DESTINATION bin RUNTIME DESTINATION bin)
 
 add_executable(verificaC19-client ${SRC_CPP_CLIENT_EXAMPLE})
-target_link_libraries (verificaC19-client verificaC19-sdk verificaC19-common-examples)
+target_link_libraries (verificaC19-client verificaC19-sdk verificaC19-common-examples -lcurl -ljsoncpp -lcrypto -lz -lcn-cbor -lpthread)
 install(TARGETS verificaC19-client ARCHIVE DESTINATION bin RUNTIME DESTINATION bin)
 
 add_executable(verificaC19-c-client ${SRC_C_CLIENT_EXAMPLE})
-target_link_libraries (verificaC19-c-client verificaC19-sdk verificaC19-common-examples)
+target_link_libraries (verificaC19-c-client verificaC19-sdk verificaC19-common-examples -lcurl -ljsoncpp -lcrypto -lz -lcn-cbor -lpthread)
 install(TARGETS verificaC19-c-client ARCHIVE DESTINATION bin RUNTIME DESTINATION bin)
 
-endif()
+endif(BUILD_EXAMPLES)

@@ -4,6 +4,8 @@
 #ifndef LOGGER_STDOUT_HPP
 #define LOGGER_STDOUT_HPP
 
+#include <stdarg.h>
+
 #include <verificaC19-sdk/interfaces/ILogger.hpp>
 
 namespace verificaC19Sdk {
