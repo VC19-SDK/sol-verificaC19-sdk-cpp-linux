@@ -95,8 +95,10 @@ void CRLStorageMemory::commitUpdatedCRL() {
 	}
 	m_updatingMode = false;
 	m_CRL["_lastUpdate"] = (int)time(NULL);
-	m_CRL["version"] = m_CRL["downloadInfo"]["version"];
-	m_CRL.removeMember("downloadInfo");
+	if (m_CRL.isMember("downloadInfo")) {
+		m_CRL["version"] = m_CRL["downloadInfo"]["version"];
+		m_CRL.removeMember("downloadInfo");
+	}
 }
 
 void CRLStorageMemory::rollbackUpdatedCRL() {
