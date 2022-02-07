@@ -730,6 +730,15 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 
 				// Rules validation--------------------------------------------
 				if (certificate.isVaccination()) {
+					// Check if vaccine is present in setting list; otherwise, return not valid
+					std::string checkDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_complete, certificate.vaccination.medicinalProduct);
+					if (checkDays.empty()) {
+						m_logger->info("Unknown or not managed vaccine %s ",
+								certificate.vaccination.medicinalProduct.c_str());
+						certificateSimple.certificateStatus = NOT_VALID;
+						break;
+					}
+
 					// In Italy, Sputnik is accepted only for San Marino republic
 					if (certificate.vaccination.medicinalProduct == RULE_TYPE_Sputnik_V) {
 						if (certificate.country != COUNTRY_SAN_MARINO) {
@@ -782,39 +791,39 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 						) {
 							// booster
 							if (countryCode == COUNTRY_ITALY) {
-								startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_booster_IT, certificate.vaccination.medicinalProduct);
+								startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_booster_IT, RULE_TYPE_GENERIC);
 								if (startDays.empty()) startDays = "0";
-								endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_booster_IT, certificate.vaccination.medicinalProduct);
+								endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_booster_IT, RULE_TYPE_GENERIC);
 								if (endDays.empty()) endDays = "180";
 							} else {
-								startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_booster_NOT_IT, certificate.vaccination.medicinalProduct);
+								startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_booster_NOT_IT, RULE_TYPE_GENERIC);
 								if (startDays.empty()) startDays = "0";
-								endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_booster_NOT_IT, certificate.vaccination.medicinalProduct);
+								endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_booster_NOT_IT, RULE_TYPE_GENERIC);
 								if (endDays.empty()) endDays = "270";
 							}
 						} else {
 							if (scanMode == SCAN_MODE_SCHOOL) {
 								if (countryCode == COUNTRY_ITALY) {
-									startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_complete_IT, certificate.vaccination.medicinalProduct);
+									startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_complete_IT, RULE_TYPE_GENERIC);
 									if (startDays.empty()) startDays = "0";
-									endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_school, certificate.vaccination.medicinalProduct);
+									endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_school, RULE_TYPE_GENERIC);
 									if (endDays.empty()) endDays = "120";
 								} else {
-									startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_complete_NOT_IT, certificate.vaccination.medicinalProduct);
+									startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_complete_NOT_IT, RULE_TYPE_GENERIC);
 									if (startDays.empty()) startDays = "0";
-									endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_school, certificate.vaccination.medicinalProduct);
+									endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_school, RULE_TYPE_GENERIC);
 									if (endDays.empty()) endDays = "120";
 								}
 							} else {
 								if (countryCode == COUNTRY_ITALY) {
-									startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_complete_IT, certificate.vaccination.medicinalProduct);
+									startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_complete_IT, RULE_TYPE_GENERIC);
 									if (startDays.empty()) startDays = "0";
-									endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_complete_IT, certificate.vaccination.medicinalProduct);
+									endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_complete_IT, RULE_TYPE_GENERIC);
 									if (endDays.empty()) endDays = "180";
 								} else {
-									startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_complete_NOT_IT, certificate.vaccination.medicinalProduct);
+									startDays = m_rulesStorage->getRule(RULE_NAME_vaccine_start_day_complete_NOT_IT, RULE_TYPE_GENERIC);
 									if (startDays.empty()) startDays = "0";
-									endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_complete_NOT_IT, certificate.vaccination.medicinalProduct);
+									endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_complete_NOT_IT, RULE_TYPE_GENERIC);
 									if (endDays.empty()) endDays = "270";
 								}
 							}
@@ -931,7 +940,7 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 						if (scanMode == SCAN_MODE_SCHOOL) {
 							startDays = m_rulesStorage->getRule(RULE_NAME_recovery_pv_cert_start_day, RULE_TYPE_GENERIC);
 							if (startDays.empty()) endDays = "0";
-							endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_school, RULE_TYPE_GENERIC);
+							endDays = m_rulesStorage->getRule(RULE_NAME_recovery_cert_end_day_school, RULE_TYPE_GENERIC);
 							if (endDays.empty()) endDays = "120";
 						} else {
 							startDays = m_rulesStorage->getRule(RULE_NAME_recovery_pv_cert_start_day, RULE_TYPE_GENERIC);
@@ -944,12 +953,12 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 							if (countryCode == COUNTRY_ITALY) {
 								startDays = m_rulesStorage->getRule(RULE_NAME_recovery_cert_start_day_IT, RULE_TYPE_GENERIC);
 								if (startDays.empty()) endDays = "0";
-								endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_school, RULE_TYPE_GENERIC);
+								endDays = m_rulesStorage->getRule(RULE_NAME_recovery_cert_end_day_school, RULE_TYPE_GENERIC);
 								if (endDays.empty()) endDays = "120";
 							} else {
 								startDays = m_rulesStorage->getRule(RULE_NAME_recovery_cert_start_day_NOT_IT, RULE_TYPE_GENERIC);
 								if (startDays.empty()) startDays = "0";
-								endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_school, RULE_TYPE_GENERIC);
+								endDays = m_rulesStorage->getRule(RULE_NAME_recovery_cert_end_day_school, RULE_TYPE_GENERIC);
 								if (endDays.empty()) endDays = "120";
 							}
 						} else {
@@ -1149,12 +1158,15 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 				}
 
 				if (certificate.isExemption()) {
+					/*
+					 * Exemption certificate valid for school
 					if (scanMode == SCAN_MODE_SCHOOL) {
 						certificateSimple.certificateStatus = NOT_VALID;
 						m_logger->debug("Exemption certificate of %s - %s not valid for selected scan mode",
 								certificate.exemption.certificateValidFrom.c_str(),
 								certificate.exemption.certificateValidUntil.c_str());
 					} else {
+					*/
 						// get current date
 						time_t t = time(NULL);
 						struct tm currentDate;
@@ -1207,7 +1219,7 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 						m_logger->info("Exemption certificate of %s - %s valid",
 								certificate.exemption.certificateValidFrom.c_str(),
 								certificate.exemption.certificateValidUntil.c_str());
-					}
+					//}
 				}
 			} while (false);
 
