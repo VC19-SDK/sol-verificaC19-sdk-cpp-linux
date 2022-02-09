@@ -1,8 +1,16 @@
 # Changelog
 
+## [1.1.6] - 09/02/2022
+
+- Fix checks for certificate with multiple records
+
+## [1.1.5] - 07/02/2022
+
+- Fix recovery certificate end validity for school mode
+
 ## [1.1.4] - 31/01/2022
 
-- Align to official Android SDK 1.1.3
+- Align to official Android SDK 1.1.4
 
 ### Added
 - New medical rules for vaccine, booster and recovery certificates
