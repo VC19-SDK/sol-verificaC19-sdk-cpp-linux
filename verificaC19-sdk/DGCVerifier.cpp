@@ -36,7 +36,7 @@ namespace verificaC19Sdk {
 #define COUNTRY_ITALY             "IT"
 #define COUNTRY_NOT_ITALY         "NOT_IT"
 
-#define WORK_VACCINE_MANDATORY_AGE  50
+#define VACCINE_UNDERAGE_AGE      18
 
 // BASE45
 static std::string decodeBase45(const std::string& src) {
@@ -153,8 +153,8 @@ static size_t decodeBase64(const std::string& in, unsigned char* out) {
 	{
 		int n = cd64[in[i]] << 18 | cd64[in[i + 1]] << 12 | cd64[in[i + 2]] << 6 | cd64[in[i + 3]];
 		out[len++] = n >> 16;
-		out[len++] = n >> 8 & 0xFF;
-		out[len++] = n & 0xFF;
+		if (in[i + 2] != '=') out[len++] = n >> 8 & 0xFF;
+		if (in[i + 3] != '=') out[len++] = n & 0xFF;
 	}
 	return len;
 }
@@ -828,8 +828,6 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 						certificateSimple.certificateStatus = vaccineStrengthenedStrategy(certificate);
 					} else if (scanMode == SCAN_MODE_BOOSTER) {
 						certificateSimple.certificateStatus = vaccineBoosterStrategy(certificate);
-					} else if (scanMode == SCAN_MODE_WORK) {
-						certificateSimple.certificateStatus = vaccineWorkStrategy(certificate);
 					} else if (scanMode == SCAN_MODE_ENTRY_ITALY) {
 						certificateSimple.certificateStatus = vaccineEntryItalyStrategy(certificate);
 					} else {
@@ -1028,39 +1026,6 @@ CertificateSimple DGCVerifier::verify(const std::string& dgcQr, const std::strin
 								certificate.test.dateTimeOfCollection.c_str());
 						break;
 					}
-					if (scanMode == SCAN_MODE_WORK) {
-						// get limit date
-						time_t t = time(NULL);
-						struct tm limitDate;
-						localtime_r(&t, &limitDate);
-						limitDate.tm_year = limitDate.tm_year - WORK_VACCINE_MANDATORY_AGE;
-
-						// get limit day
-						time_t limitDay = (mktime(&limitDate) + limitDate.tm_gmtoff) / 3600 / 24;
-
-						// get birth date
-						struct tm birthDate;
-						memset(&birthDate, 0, sizeof(birthDate));
-						if (certificate.dateOfBirth.length() == 4) {
-							strptime(certificate.dateOfBirth.c_str(), "%Y", &birthDate);
-						} else if (certificate.dateOfBirth.length() == 7) {
-							strptime(certificate.dateOfBirth.c_str(), "%Y-%m", &birthDate);
-						} else {
-							strptime(certificate.dateOfBirth.c_str(), "%Y-%m-%d", &birthDate);
-						}
-
-						// get birth day
-						time_t birthDay = (mktime(&birthDate) + 43200) / 3600 / 24;
-
-						if (birthDay <= limitDay) {
-							// digital certificate not valid
-							m_logger->info("Test certificate of %s not valid (%d: %d - %d) for selected scan mode",
-									certificate.test.dateTimeOfCollection.c_str(),
-									hours, startHour, endHour);
-							certificateSimple.certificateStatus = NOT_VALID;
-							break;
-						}
-					}
 					certificateSimple.certificateStatus = VALID;
 					m_logger->debug("Test certificate of %s valid (%d: %d - %d)",
 							certificate.test.dateTimeOfCollection.c_str(),
@@ -1243,6 +1208,18 @@ int DGCVerifier::getVaccineEndDayCompleteExtendedEMA() const {
 	std::string endDays = m_rulesStorage->getRule(RULE_NAME_EMA_vaccine_end_day_complete_extended_EMA, RULE_TYPE_GENERIC);
 	m_logger->debug("Loaded rule %s, %s: %s", RULE_NAME_EMA_vaccine_end_day_complete_extended_EMA, RULE_TYPE_GENERIC, endDays.c_str());
 	return endDays.length() > 0 ? atoi(endDays.c_str()) : 0;
+}
+
+int DGCVerifier::getVaccineEndDayCompleteUnder18() const {
+	std::string endDays = m_rulesStorage->getRule(RULE_NAME_vaccine_end_day_complete_under_18, RULE_TYPE_GENERIC);
+	m_logger->debug("Loaded rule %s, %s: %s", RULE_NAME_vaccine_end_day_complete_under_18, RULE_TYPE_GENERIC, endDays.c_str());
+	return endDays.length() > 0 ? atoi(endDays.c_str()) : 0;
+}
+
+int DGCVerifier::getVaccineCompleteUnder18Offset() const {
+	std::string offsetDays = m_rulesStorage->getRule(RULE_NAME_vaccine_complete_under_18_offset, RULE_TYPE_GENERIC);
+	m_logger->debug("Loaded rule %s, %s: %s", RULE_NAME_vaccine_complete_under_18_offset, RULE_TYPE_GENERIC, offsetDays.c_str());
+	return offsetDays.length() > 0 ? atoi(offsetDays.c_str()) : 0;
 }
 
 CertificateStatus DGCVerifier::vaccineStandardStrategy(const CertificateModel& certificate) const {
@@ -1506,12 +1483,15 @@ CertificateStatus DGCVerifier::vaccineBoosterStrategy(const CertificateModel& ce
 	}
 }
 
-CertificateStatus DGCVerifier::vaccineWorkStrategy(const CertificateModel& certificate) const {
+CertificateStatus DGCVerifier::vaccineEntryItalyStrategy(const CertificateModel& certificate) const {
+	int startDay = 0;
+	int endDay = 0;
+
 	// get limit date
 	time_t t = time(NULL);
 	struct tm limitDate;
 	localtime_r(&t, &limitDate);
-	limitDate.tm_year = limitDate.tm_year - WORK_VACCINE_MANDATORY_AGE;
+	limitDate.tm_year = limitDate.tm_year - VACCINE_UNDERAGE_AGE;
 
 	// get limit day
 	time_t limitDay = (mktime(&limitDate) + limitDate.tm_gmtoff) / 3600 / 24;
@@ -1530,20 +1510,14 @@ CertificateStatus DGCVerifier::vaccineWorkStrategy(const CertificateModel& certi
 	// get birth day
 	time_t birthDay = (mktime(&birthDate) + 43200) / 3600 / 24;
 
-	if (birthDay <= limitDay) {
-		m_logger->info("vaccineStrengthenedStrategy for person older than %d years",
-				WORK_VACCINE_MANDATORY_AGE);
-		return vaccineStrengthenedStrategy(certificate);
-	} else {
-		m_logger->info("vaccineStandardStrategy for person not older than %d years",
-				WORK_VACCINE_MANDATORY_AGE);
-		return vaccineStandardStrategy(certificate);
-	}
-}
+	// apply offset
+	birthDay += getVaccineCompleteUnder18Offset();
 
-CertificateStatus DGCVerifier::vaccineEntryItalyStrategy(const CertificateModel& certificate) const {
-	int startDay = 0;
-	int endDay = 0;
+	bool isUnderAge = false;
+	if (birthDay > limitDay) {
+		isUnderAge = true;
+	}
+
 	if (isNotCompleteVaccine(certificate)) {
 		startDay = getVaccineStartDayNotComplete(certificate.vaccination.medicinalProduct);
 		endDay = getVaccineEndDayNotComplete(certificate.vaccination.medicinalProduct);
@@ -1553,12 +1527,15 @@ CertificateStatus DGCVerifier::vaccineEntryItalyStrategy(const CertificateModel&
 			endDay = getVaccineEndDayBoosterUnified(COUNTRY_NOT_ITALY);
 		} else {
 			startDay = getVaccineStartDayCompleteUnified(COUNTRY_NOT_ITALY, certificate.vaccination.medicinalProduct);
-			endDay = getVaccineEndDayCompleteUnified(COUNTRY_NOT_ITALY);
+			if (isUnderAge) {
+				endDay = getVaccineEndDayCompleteUnder18();
+			} else {
+				endDay = getVaccineEndDayCompleteUnified(COUNTRY_NOT_ITALY);
+			}
 		}
 	}
 
 	// get current date
-	time_t t = time(NULL);
 	struct tm currentDate;
 	localtime_r(&t, &currentDate);
 

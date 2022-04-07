@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.10] - 07/04/2022
+
+- New rules for IT entry for Under 18
+
+## [1.1.9] - 31/03/2022
+
+- Removed work scan mode
+
 ## [1.1.8] - 03/01/2022
 
 - Added User-Agent:  verificac19-sdk-cpp/<version> to requests to API
